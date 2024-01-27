@@ -1,0 +1,51 @@
+Neutral file: models/voxelFEM/data/configuration_gen/thermal/upload.nf
+Image: models/voxelFEM/data/configuration_gen/thermal/upload.raw
+*******************************************************
+MODEL DATA:
+Analysis: THERMAL_3D
+Homogenization on direction: ALL
+Number of elements (x,y,z): [1,253,252]
+Number of elements (total): 63756
+Number of nodes: 128524
+Number of DOFs: 63756
+Number of materials: 3
+Numerical tolerance: 1.000000e-06
+Max iterations: 10000
+Solver: PCG
+*******************************************************
+Running homogenization...
+    ------------------------------------------------------
+    Analysis on X:
+    Solving system of equations...
+    | PCG solver ran through 0 iterations.
+    | Residual: 0.000000e+00
+    | Mean time per iteration: 0.00e+00 s
+    | Elapsed time: 4.18e-04 s
+    Updating homogenized properties...
+    | Elapsed time: 1.42e-02 s
+    ------------------------------------------------------
+    Analysis on Y:
+    Solving system of equations...
+    | PCG solver ran through 359 iterations.
+    | Residual: 9.889707e-07
+    | Mean time per iteration: 3.44e-04 s
+    | Elapsed time: 1.43e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 1.49e-02 s
+    ------------------------------------------------------
+    Analysis on Z:
+    Solving system of equations...
+    | PCG solver ran through 352 iterations.
+    | Residual: 9.960774e-07
+    | Mean time per iteration: 2.58e-04 s
+    | Elapsed time: 1.03e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 1.49e-02 s
+    ------------------------------------------------------
+Done.
+-------------------------------------------------------
+Homogenized Constitutive Matrix (Thermal Conductivity):
+  1.80152456e+00  0.00000000e+00  0.00000000e+00
+  0.00000000e+00  1.71974175e+00  7.76333870e-06
+  0.00000000e+00  9.64336118e-06  1.59764091e+00
+-------------------------------------------------------

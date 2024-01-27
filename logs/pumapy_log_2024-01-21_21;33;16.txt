@@ -1,0 +1,4 @@
+
+---------------------------- 
+Importing Domain from models/voxelFEM/data/slice_rebuild/upload_3d_tif/upload.tif
+---------------------------- 

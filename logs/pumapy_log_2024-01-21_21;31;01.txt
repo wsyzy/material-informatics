@@ -1,0 +1,12 @@
+
+---------------------------- 
+Importing Domain from models/voxelFEM/data/slice_rebuild/upload_3d_tif/upload.tif
+---------------------------- 
+
+---------------------------- 
+Computing Isosurface
+---------------------------- 
+Domain Size: (253, 252, 252)
+Cutoff: [0, 0]
+Closed Edges: False
+Gaussian: False

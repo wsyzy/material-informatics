@@ -1,0 +1,81 @@
+Neutral file: models/voxelFEM/data/configuration_gen/elasticity/upload.nf
+Image: models/voxelFEM/data/configuration_gen/elasticity/upload.raw
+*******************************************************
+MODEL DATA:
+Analysis: ELASTIC_3D
+Homogenization on direction: ALL
+Number of elements (x,y,z): [1,253,252]
+Number of elements (total): 63756
+Number of nodes: 128524
+Number of DOFs: 191268
+Number of materials: 3
+Numerical tolerance: 1.000000e-06
+Max iterations: 10000
+Solver: PCG
+*******************************************************
+Running homogenization...
+    ------------------------------------------------------
+    Analysis on X:
+    Solving system of equations...
+    | PCG solver ran through 554 iterations.
+    | Residual: 9.982774e-07
+    | Mean time per iteration: 6.99e-04 s
+    | Elapsed time: 4.15e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 3.05e-02 s
+    ------------------------------------------------------
+    Analysis on Y:
+    Solving system of equations...
+    | PCG solver ran through 534 iterations.
+    | Residual: 9.913111e-07
+    | Mean time per iteration: 6.67e-04 s
+    | Elapsed time: 3.83e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 1.77e-02 s
+    ------------------------------------------------------
+    Analysis on Z:
+    Solving system of equations...
+    | PCG solver ran through 522 iterations.
+    | Residual: 9.946508e-07
+    | Mean time per iteration: 6.94e-04 s
+    | Elapsed time: 3.91e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 1.83e-02 s
+    ------------------------------------------------------
+    Analysis on YZ (shear):
+    Solving system of equations...
+    | PCG solver ran through 691 iterations.
+    | Residual: 9.937862e-07
+    | Mean time per iteration: 6.26e-04 s
+    | Elapsed time: 4.58e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 1.67e-02 s
+    ------------------------------------------------------
+    Analysis on XZ (shear):
+    Solving system of equations...
+    | PCG solver ran through 653 iterations.
+    | Residual: 9.990986e-07
+    | Mean time per iteration: 6.55e-04 s
+    | Elapsed time: 4.56e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 1.61e-02 s
+    ------------------------------------------------------
+    Analysis on XY (shear):
+    Solving system of equations...
+    | PCG solver ran through 680 iterations.
+    | Residual: 9.776372e-07
+    | Mean time per iteration: 6.49e-04 s
+    | Elapsed time: 4.69e-01 s
+    Updating homogenized properties...
+    | Elapsed time: 1.68e-02 s
+    ------------------------------------------------------
+Done.
+-------------------------------------------------------
+Homogenized Constitutive Matrix (Elasticity):
+  8.77649317e+01  4.08317314e+01  4.00877306e+01  3.58841876e-03  4.95272080e-07  5.58702613e-08
+  4.08317452e+01  8.66562985e+01  3.99021287e+01  6.17343496e-03  5.39138147e-07  4.45962922e-08
+  4.00877317e+01  3.99021296e+01  8.44727405e+01  4.28262552e-03  8.99460524e-07  1.11458519e-07
+  3.58784209e-03  6.18811362e-03  4.20285834e-03  2.22393569e+01  -8.51229468e-09  -7.65091953e-10
+  -4.59027200e-17  -5.38744135e-17  -1.50875716e-14  7.63864298e-16  2.23379897e+01  3.43819855e-03
+  -1.20290606e-16  9.45128807e-17  -6.88238987e-16  -8.67663398e-14  3.43076347e-03  2.30149167e+01
+-------------------------------------------------------

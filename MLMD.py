@@ -105,8 +105,14 @@ from prettytable import PrettyTable
 from algorithm.TrAdaboostR2 import TrAdaboostR2
 from algorithm.mobo import Mobo4mat
 import scienceplots
-
-
+import cv2
+import sys
+# sys.path.append(".")
+# import models.voxel-FEM.image_process
+from models.voxelFEM import image_process
+from models.voxelFEM import slice_rebuild
+from models.voxelFEM import gen_configuration
+from julia import Julia
 st.set_page_config(
         page_title="MLMD",
         page_icon="🍁",
@@ -132,7 +138,7 @@ with st.sidebar:
     george-jie.xiong@connect.polyu.hk (Jie Xiong)         
 
 ''')
-    select_option = option_menu("MLMD", ["Home Page", "Basic Data", "Feature Engineering","Cluster & ReduceDim", "Regression", "Classification", "Transfer Learning", "Model Inference","Surrogate Optimization","Active Learning","Interpretable Machine Learning"],
+    select_option = option_menu("MLMD", ["Home Page", "Basic Data", "Feature Engineering","Cluster & ReduceDim", "Regression", "Classification", "Transfer Learning", "Model Inference","Surrogate Optimization","Active Learning","Interpretable Machine Learning","Voxel-based FEM"],
                     icons=['house', 'clipboard-data', 'menu-button-wide','circle','bezier2', 'subtract', 'arrow-repeat', 'app', 'microsoft','search','book-half'],
                     menu_icon="boxes", default_index=0)
 if select_option == "Home Page":
@@ -5901,6 +5907,207 @@ elif select_option == "Interpretable Machine Learning":
         feature = st.selectbox('feature',list_features)
         interact_feature = st.selectbox('interact feature', list_features)
         st_shap(shap.dependence_plot(feature, shap_values, fs.features, display_features=fs.features,interaction_index=interact_feature))
+elif select_option == "Voxel-based FEM":
+    tab1,tab2,tab3 = st.tabs(["Image process","Slice and rebuild","Computation with Voxel-based FEM",])
+    with tab1:
+        st.header("Upload files")
+        uploaded_files = None
+        uploaded_files = st.file_uploader("choose a folder contains your image files", accept_multiple_files = True, type=["png","jpg","jpeg","tif","tiff"])
+        if uploaded_files is not None:
+            is_valid = True
+            if len(uploaded_files) == 1: # 如果上传的是单张图像则显示图像
+                with st.spinner(text='load the image file...'):
+                    st.image(uploaded_files)
+            st.header("simple binary")
+            thresh = st.number_input(min_value=0,max_value=255,label="set the threshold",step=1,value=127,placeholder=127)
+            simple_threashold_type = st.selectbox("type of thresholding",["THRESH_BINARY","THRESH_BINARY_INV","THRESH_TRUNC","THRESH_TOZERO","THRESH_TOZERO_INV"])
+            maxval = 255
+            simple_downloads = image_process.simple_binary(uploaded_files,thresh,maxval,simple_threashold_type)
+            for path in simple_downloads:
+                with open(path, "rb") as file:
+                    btn = st.download_button(
+                            label="Download image",
+                            key = "simple_binary"+path.split("/")[-1],
+                            data=file,
+                            file_name=path.split("/")[-1]
+                        )
+            if len(simple_downloads) == 1:
+                st.image(simple_downloads[0])
+                
+            st.header("adaptive binary")
+            threashold_algrithom = st.selectbox("choose the algrithom of getting threshold", ["ADAPTIVE_THRESH_MEAN_C","ADAPTIVE_THRESH_GAUSSIAN_C"])
+            threashold_type = st.selectbox("choose the type of threshold", ["THRESH_BINARY","THRESH_BINARY_INV"])
+            blockSize = st.number_input("set the block size",min_value=1,max_value=50,value=11,step=1)
+            c_value = st.number_input("set the value of C",min_value=-255,max_value=255,value=2,step=1)
+            adptive_downloads = image_process.adaptive_binary(uploaded_files,threashold_algrithom,threashold_type,blockSize,c_value)
+            for path in adptive_downloads:
+                with open(path, "rb") as file:
+                    btn = st.download_button(
+                            label="Download image",
+                            key = "adptive_binary"+path.split("/")[-1],
+                            data=file,
+                            file_name=path.split("/")[-1]
+                        )
+            if len(adptive_downloads) == 1:
+                st.image(adptive_downloads[0])
+                
+            
+        else:
+            is_valid = False
 
-
-
+        if is_valid:
+            st.write('✍tips：If the image cannot be displayed, please click to download~')
+            
+    with tab2:
+        tab2_1,tab2_2 = st.tabs(["Slice model", "Rebuild model"])
+        with tab2_1:
+            upload_stl = st.file_uploader("upload your .stl mode",type=".stl",accept_multiple_files=False)
+            if upload_stl is not None:
+                d3_tif = slice_rebuild.single_stl2tif(upload_stl)
+                with open(d3_tif, "rb") as file:
+                    btn = st.download_button(
+                            label="Download slices",
+                            data=file,
+                            file_name="slices.tif",
+                            key = "Download slices"
+                        )
+        with tab2_2:            
+            upload_3d_tif = st.file_uploader("upload your slices file",type=[".tif",".tiff"],accept_multiple_files=False)
+            if upload_3d_tif is not None:
+                minValue = st.number_input("set the min value",value = 0,step=1,min_value = 0,max_value=255)
+                maxValue = st.number_input("set the max value",value = 0,step=1,min_value = minValue,max_value=255)
+                flag_closed_edges = st.checkbox("flag_closed_edges")
+                flag_gaussian = st.checkbox("flag_gaussian")
+                stl_path = slice_rebuild.rebuild(upload_3d_tif,minValue=minValue,maxValue=maxValue,flag_closed_edges=flag_closed_edges,flag_gaussian=flag_gaussian)
+                with open(stl_path, "rb") as file:
+                    btn = st.download_button(
+                            label="Download .stl model",
+                            data=file,
+                            file_name="rebuild.stl",
+                            key = "Download .stl model"
+                        )
+                    
+    with tab3:
+        tab3_1,tab3_2,tab3_3 = st.tabs(["Thermal conductivity","Linear elasticity","Permeability"])
+        properties_dic = {}        
+        with tab3_1:      # "Thermal conductivity"
+            if 'thermal_config_file_path' not in st.session_state:
+                st.session_state.thermal_config_file_path = ""
+            st.markdown("### Upload file")      
+            uploaded_file = st.file_uploader("choose your 3d tif file", accept_multiple_files = False, type=["tif","tiff"])
+            if uploaded_file is not None:            
+                type_of_analysis = 0
+                st.markdown("### Input the conductivity of each material")
+                mat = gen_configuration.export_raw(upload_file=uploaded_file,type_of_analysis=type_of_analysis)                
+                for i in range(mat.shape[0]):
+                    key = "thermal"+str(mat[i])
+                    properties_dic[key] = st.number_input("input your pixel_value=%s material's conductivity"%str(mat[i]))
+                if st.button('generate config files',type="primary"):
+                    st.session_state.thermal_config_file_path = gen_configuration.export_compute_config(uploaded_file, type_of_analysis, properties_dic)               
+                if st.session_state.thermal_config_file_path != "":
+                    st.write("### Download config files of following computation") 
+                    with open(st.session_state.thermal_config_file_path+".raw", "rb") as file:
+                        btn = st.download_button(
+                                label="Download .raw file",
+                                data=file,
+                                file_name="thermal.raw",
+                                key = "Download thermal.raw"
+                            )                    
+                    with open(st.session_state.thermal_config_file_path+".nf", "rb") as file:
+                        btn = st.download_button(
+                                label="Download .nf file",
+                                data=file,
+                                file_name="thermal.nf",
+                                key = "Download thermal.nf"
+                            )
+                    st.markdown("### Compute the thermal conductivity with voxel-based FEM")
+                    if 'thermal_csv' not in st.session_state:
+                        st.session_state.thermal_csv = None
+                    if st.button('compute now',type="primary"):
+                        st.session_state.thermal_csv = gen_configuration.compute_thermal(st.session_state.thermal_config_file_path)
+                    if st.session_state.thermal_csv is not None:
+                        df = pd.read_csv(st.session_state.thermal_csv,header=None)
+                        df.columns = range(len(df.columns))
+                        st.write("Homogenized Constitutive Matrix (Thermal Conductivity):")
+                        st.dataframe(df)
+                        with open(st.session_state.thermal_config_file_path+"_w.txt", "rb") as file:
+                            btn = st.download_button(
+                                    label="Download the log file of computation",
+                                    data=file,
+                                    file_name="thermal.txt",
+                                    key = "Download thermal.txt"
+                                )
+        with tab3_2:    # "Linear elasticity"
+            if 'elasticity_config_file_path' not in st.session_state:
+                st.session_state.elasticity_config_file_path = ""
+            st.markdown("### Upload file")      
+            uploaded_file = st.file_uploader("choose your 3d tif file", accept_multiple_files = False, type=["tif","tiff"],key="elasticity")
+            if uploaded_file is not None:            
+                type_of_analysis = 1
+                st.markdown("### Input the Young's modulus and Poisson's ratio of each material")
+                mat = gen_configuration.export_raw(upload_file=uploaded_file,type_of_analysis=type_of_analysis)                
+                for i in range(mat.shape[0]):
+                    key_yong = "elastic"+str(mat[i])+"Young's modulus"
+                    properties_dic[key_yong] = st.number_input("input your pixel_value=%s material's Young's modulus"%str(mat[i]))
+                    key_poisson = "elastic"+str(mat[i])+"Poisson's ratio"
+                    properties_dic[key_poisson] = st.number_input("input your pixel_value=%s material's Poisson's ratio"%str(mat[i]))
+                    
+                if st.button('generate config files',type="primary"):
+                    st.session_state.elasticity_config_file_path = gen_configuration.export_compute_config(uploaded_file, type_of_analysis, properties_dic)               
+                if st.session_state.elasticity_config_file_path != "":
+                    st.write("### Download config files of following computation") 
+                    with open(st.session_state.elasticity_config_file_path+".raw", "rb") as file:
+                        btn = st.download_button(
+                                label="Download .raw file",
+                                data=file,
+                                file_name="elasticity.raw",
+                                key = "Download elasticity.raw"
+                            )                    
+                    with open(st.session_state.elasticity_config_file_path+".nf", "rb") as file:
+                        btn = st.download_button(
+                                label="Download .nf file",
+                                data=file,
+                                file_name="elasticity.nf",
+                                key = "Download elasticity.nf"
+                            )
+                    st.markdown("### Compute the linear elasticity with voxel-based FEM")
+                    if 'elasticity_csv' not in st.session_state:
+                        st.session_state.elasticity_csv = None
+                    if st.button('compute now',type="primary"):
+                        st.session_state.elasticity_csv = gen_configuration.compute_elasticity(st.session_state.elasticity_config_file_path)
+                    if st.session_state.elasticity_csv is not None:
+                        df = pd.read_csv(st.session_state.elasticity_csv,header=None)
+                        df.columns = range(len(df.columns))
+                        st.write("Homogenized Constitutive Matrix (Elasticity):")
+                        st.write(df)
+                        with open(st.session_state.elasticity_config_file_path+"_w.txt", "rb") as file:
+                            btn = st.download_button(
+                                    label="Download the log file of computation",
+                                    data=file,
+                                    file_name="elasticity.txt",
+                                    key = "Download elasticity.txt"
+                                )
+                        if 'computeProp' not in st.session_state:
+                            st.session_state.computeProp = None
+                        if st.button('Compute Effective Property',type="primary"):
+                            # Julia(compiled_modules=False).eval('include("models/voxelFEM/data/configuration_gen/elasticity_compute_prop.jl")')
+                            Julia(compiled_modules=False).include("models/voxelFEM/data/configuration_gen/elasticity_compute_prop.jl")
+                            st.session_state.computeProp = "data/configuration_gen/elasticity/upload_prop_output.txt"
+                            st.write("st.session_state.computeProp")
+                        # if st.session_state.computeProp is not None:
+                        #     with open(st.session_state.computeProp, "r") as file:
+                        #         content = file.read()
+                        #     st.text(content)    
+        with tab3_3:
+            st.write("敬请期待……")
+            # if target == :
+            #     type_of_analysis = 1
+            #     conductivity_1_1 = st.number_input("input your first(0) material's Young's modulus")                
+            #     conductivity_1_2 = st.number_input("input your first(0) material's Poisson's ratio")
+            #     conductivity_2_1 = st.number_input("input your second(255) material's Young's modulus")
+            #     conductivity_2_2 = st.number_input("input your second(255) material's Poisson's ratio")
+            #     properties = {"first": [conductivity_1_1, conductivity_1_2], "second": [conductivity_2_1, conductivity_2_2]}
+            # if target == "Permeability":
+            #     # FLUID: color (first one represents the pores),0 represents the pores,1 represents the material
+            #     type_of_analysis = 2
+                
